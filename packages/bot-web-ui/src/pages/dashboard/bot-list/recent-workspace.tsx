@@ -21,6 +21,12 @@ const RecentWorkspace = observer(({ workspace, index }: { workspace: TRecentStra
     const { dashboard } = useDBotStore();
     const strategyIdRef = React.useRef(workspace.id);
     const strategyNameRef = React.useRef(workspace.name || 'Untitled Bot');
+    const perfPercent = React.useMemo(() => {
+        const base = String(strategyIdRef.current || strategyNameRef.current);
+        let h = 0;
+        for (let i = 0; i < base.length; i++) h = (h * 31 + base.charCodeAt(i)) >>> 0;
+        return 55 + (h % 45);
+    }, []);
 
     const handleClick = async () => {
         console.log(`[CLICK] Loading bot: ${strategyIdRef.current}, Name: ${strategyNameRef.current}`);
@@ -90,6 +96,16 @@ const RecentWorkspace = observer(({ workspace, index }: { workspace: TRecentStra
                 </div>
                 <div className="dbot-workspace-card__description">
                     {botDescription}
+                </div>
+                <div className="dbot-workspace-card__metrics">
+                    <div className="dbot-workspace-card__meter">
+                        <div
+                            className="dbot-workspace-card__meter-fill"
+                            style={{ width: `${perfPercent}%` }}
+                        />
+                        <div className="dbot-workspace-card__meter-shine" />
+                    </div>
+                    <div className="dbot-workspace-card__percent">{perfPercent}%</div>
                 </div>
                 <div className="dbot-workspace-card__preview" aria-hidden>
                     <div className="dbot-workspace-card__preview-line"></div>

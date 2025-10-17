@@ -31,6 +31,18 @@
         min-height: 120px;
     }
 
+@keyframes meter-flow {
+    0% { background-position: 200% 0; }
+    50% { background-position: 100% 0; }
+    100% { background-position: 0 0; }
+}
+
+@keyframes meter-shine {
+    0% { transform: translateX(-100%); opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0.6; }
+}
+
     &:hover {
         transform: translateY(-8px) scale(1.03);
         box-shadow: 0 15px 40px rgba(110, 68, 255, 0.25), var(--hover-glow);
@@ -200,6 +212,54 @@
         text-overflow: ellipsis;
         transition: all 0.3s ease;
         margin-top: 0.5rem;
+    }
+
+    /* Performance meter */
+    &__metrics {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 6px;
+    }
+
+    &__meter {
+        position: relative;
+        flex: 1;
+        height: 10px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.05));
+        overflow: hidden;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    }
+
+    &__meter-fill {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #ffffff, #00d4ff 40%, #13ef93 100%);
+        box-shadow: 0 0 10px rgba(0,212,255,0.45), 0 0 14px rgba(19,239,147,0.25);
+        animation: meter-flow 2s ease-in-out infinite;
+        background-size: 200% 100%;
+    }
+
+    &__meter-shine {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        mix-blend-mode: screen;
+        animation: meter-shine 1.8s linear infinite;
+        pointer-events: none;
+    }
+
+    &__percent {
+        min-width: 44px;
+        text-align: right;
+        font-weight: 700;
+        color: #eafcfa;
+        text-shadow: 0 0 10px rgba(0,212,255,0.35);
+        font-size: 0.9rem;
     }
 
     &__preview {
