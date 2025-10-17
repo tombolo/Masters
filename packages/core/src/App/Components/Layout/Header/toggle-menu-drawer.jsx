@@ -364,13 +364,13 @@ const ToggleMenuDrawer = observer(({ platform_config }) => {
                                         />
                                         {/* Social icons (mobile) */}
                                         <div className='header__socials'>
-                                            <a href='https://www.facebook.com/share/19FVfZ4As6/?mibextid=wwXIfr' target='_blank' rel='noopener noreferrer' aria-label='Facebook'>
+                                            <a href='https://www.facebook.com/share/19FVfZ4As6/?mibextid=wwXIfr/share/19FVfZ4As6/?mibextid=wwXIfr' target='_blank' rel='noopener noreferrer' aria-label='Facebook'>
                                                 <Icon icon='IcFacebook' width={22} height={22} />
                                             </a>
                                             <a href='https://wa.me/+254117624729' target='_blank' rel='noopener noreferrer' aria-label='WhatsApp'>
                                                 <Icon icon='IcWhatsappFilled' width={22} height={22} />
                                             </a>
-                                            <a href='https://t.me/states36' target='_blank' rel='noopener noreferrer' aria-label='Telegram'>
+                                            <a href='https://t.me/states36/states36' target='_blank' rel='noopener noreferrer' aria-label='Telegram'>
                                                 <Icon icon='IcTelegram' width={22} height={22} />
                                             </a>
                                             <a href='https://www.instagram.com/states4901?igsh=NXZyN242Z3Y3dzc0&utm_source=qr' target='_blank' rel='noopener noreferrer' aria-label='Instagram'>
