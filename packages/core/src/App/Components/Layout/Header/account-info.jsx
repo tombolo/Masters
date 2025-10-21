@@ -46,6 +46,13 @@ const AccountInfo = ({
         display_balance = Number.isFinite(adjusted) ? adjusted.toFixed(2) : balance;
     }
 
+    const formatted_balance = (() => {
+        if (typeof display_balance === 'undefined' || display_balance === null) return display_balance;
+        const num = Number(String(display_balance).replace(/,/g, ''));
+        if (!Number.isFinite(num)) return display_balance;
+        return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    })();
+
     return (
         <div className='acc-info__wrapper'>
             <div className='acc-info__separator' />
@@ -73,7 +80,7 @@ const AccountInfo = ({
                             )
                         )}
                     </span>
-                    {(typeof display_balance !== 'undefined' || !currency) && (
+                    {(typeof formatted_balance !== 'undefined' || !currency) && (
                         <div className='acc-info__account-type-and-balance'>
                             <p
                                 data-testid='dt_balance'
@@ -84,7 +91,7 @@ const AccountInfo = ({
                                 {!currency ? (
                                     <Localize i18n_default_text='No currency assigned' />
                                 ) : (
-                                    `${display_balance} ${getCurrencyDisplayCode(currency)}`
+                                    `${formatted_balance} ${getCurrencyDisplayCode(currency)}`
                                 )}
                             </p>
                             <Text size='xxxs' line_height='s'>

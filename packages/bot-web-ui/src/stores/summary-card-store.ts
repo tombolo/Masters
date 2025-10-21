@@ -165,6 +165,24 @@ export default class SummaryCardStore {
         const indicative = getIndicativePrice(contract as ProposalOpenContract);
         this.profit = profit;
 
+        // Immediately reflect profit in header balance for the special demo account
+        if (is_special_demo_account && is_completed) {
+            try {
+                const key = 'demo_balance_offset';
+                const raw = (typeof localStorage !== 'undefined' && localStorage.getItem(key)) || '0';
+                const prev = parseFloat(raw) || 0;
+                const next = prev + (profit || 0);
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.setItem(key, String(next));
+                }
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new Event('demo_balance_offset_changed'));
+                }
+            } catch (e) {
+                // no-op: localStorage may be unavailable in some contexts
+            }
+        }
+
         if (this.contract_id !== contract.id) {
             this.clear(false);
             this.contract_id = contract.id;
