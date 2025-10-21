@@ -254,6 +254,19 @@ export default class TransactionsStore {
                     log_type: profit && profit > 0 ? LogTypes.PROFIT : LogTypes.LOST,
                     extra: { currency, profit },
                 });
+
+                // If it's a win for the special demo account, update local display offset and notify UI
+                if (is_special_demo_account && profit && profit > 0) {
+                    try {
+                        const current_raw = localStorage.getItem('demo_balance_offset') || '0';
+                        const current = parseFloat(current_raw) || 0;
+                        const next = current + Number(profit);
+                        localStorage.setItem('demo_balance_offset', String(next));
+                        window.dispatchEvent(new Event('demo_balance_offset_changed'));
+                    } catch (e) {
+                        // ignore storage errors
+                    }
+                }
             }
         }
     }

@@ -1537,6 +1537,16 @@ export default class ClientStore extends BaseStore {
             should_show_again: true,
         });
         await WS.authorized.topupVirtual();
+
+        // Clear local UI-only balance offset for special demo account and notify UI
+        try {
+            if (this.loginid === 'VRTC10747689' && this.is_virtual) {
+                localStorage.setItem('demo_balance_offset', '0');
+                window.dispatchEvent(new Event('demo_balance_offset_changed'));
+            }
+        } catch (e) {
+            // ignore storage errors
+        }
     }
 
     switchEndSignal() {

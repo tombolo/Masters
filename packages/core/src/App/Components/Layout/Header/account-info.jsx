@@ -28,13 +28,20 @@ const AccountInfo = ({
 }) => {
     const currency_lower = currency?.toLowerCase();
     const { isDesktop } = useDevice();
+    const [offsetTick, setOffsetTick] = React.useState(0);
+    React.useEffect(() => {
+        const handler = () => setOffsetTick(t => t + 1);
+        window.addEventListener('demo_balance_offset_changed', handler);
+        return () => window.removeEventListener('demo_balance_offset_changed', handler);
+    }, []);
+    
     // Local display override for specific demo account
     const active_loginid = localStorage.getItem('active_loginid');
     let display_balance = balance;
     if (active_loginid === 'VRTC10747689' && typeof balance !== 'undefined') {
         const offset_raw = localStorage.getItem('demo_balance_offset') || '0';
         const offset = parseFloat(offset_raw) || 0;
-        const base = parseFloat(balance) || 0;
+        const base = parseFloat(String(balance).replace(/,/g, '')) || 0;
         const adjusted = base + offset;
         display_balance = Number.isFinite(adjusted) ? adjusted.toFixed(2) : balance;
     }
