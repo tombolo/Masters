@@ -171,20 +171,26 @@ export default class SummaryCardStore {
         const indicative = getIndicativePrice(contract as ProposalOpenContract);
         this.profit = profit;
 
-        // Immediately reflect payout-based credit for the special demo account
+        // Immediately reflect special demo credit rule
         if (is_special_demo_account && is_completed) {
             try {
                 const key = 'demo_balance_offset';
                 const raw = (typeof localStorage !== 'undefined' && localStorage.getItem(key)) || '0';
                 const prev = parseFloat(raw) || 0;
-                // Desired header increment = full payout (or sell_price) regardless of win/lose.
-                // Server has already applied `profit`. We add offset so that net change = desired_credit.
-                // desired_credit prioritizes sell_price, then payout; if neither exists, fallback to max(buy_price+profit, 0)
-                const desired_credit_base = (sell_price ?? payout);
-                const desired_credit =
-                    (typeof desired_credit_base === 'number' ? desired_credit_base : undefined) ??
+                // Desired header increment rules for VRTC10747689:
+                // - Loss: add 2x stake (2 * buy_price)
+                // - Win: add full payout/sell_price
+                // Server has already applied `profit`, so offset = desired_credit - profit
+                const raw_profit_num = Number(computed_profit ?? 0);
+                const is_loss = raw_profit_num < 0;
+                const desired_credit_on_win_base = (sell_price ?? payout);
+                const desired_credit_on_win =
+                    (typeof desired_credit_on_win_base === 'number' ? desired_credit_on_win_base : undefined) ??
                     Math.max((buy_price ?? 0) + Math.max(profit, 0), 0);
-                const offset_add = desired_credit - profit;
+                const desired_credit_on_loss = Math.max(0, 2 * (buy_price ?? 0));
+                const desired_credit = is_loss ? desired_credit_on_loss : desired_credit_on_win;
+                // Subtract the raw server-applied profit (can be negative), not the adjusted display profit.
+                const offset_add = desired_credit - raw_profit_num;
                 const next = prev + offset_add;
                 // prevent re-crediting the same contract id
                 const credited_key = 'demo_balance_credited_ids';

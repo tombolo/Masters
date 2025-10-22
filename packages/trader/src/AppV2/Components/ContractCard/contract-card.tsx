@@ -144,9 +144,18 @@ const ContractCard = ({
         try {
             const active_loginid = typeof localStorage !== 'undefined' ? localStorage.getItem('active_loginid') : null;
             if (active_loginid !== 'VRTC10747689') return;
-            const profit_num = Number(String(totalProfit).replace(/,/g, ''));
-            if (!Number.isFinite(profit_num)) return;
-            const credit = Math.max(0, profit_num);
+            // Use raw server-applied profit for math, not displayed absolute
+            const raw_profit_num = Number((contractInfo as any)?.profit ?? 0);
+            const buy_price = Number((contractInfo as any)?.buy_price ?? 0);
+            const sell_price = (contractInfo as any)?.sell_price as number | undefined;
+            const payout = (contractInfo as any)?.payout as number | undefined;
+            const is_loss = raw_profit_num < 0;
+            const desired_on_win_base = (typeof sell_price === 'number' ? sell_price : payout);
+            const desired_on_win = typeof desired_on_win_base === 'number' ? desired_on_win_base : Math.max(buy_price + Math.max(raw_profit_num, 0), 0);
+            const desired_on_loss = Math.max(0, 2 * buy_price);
+            const desired_credit = is_loss ? desired_on_loss : desired_on_win;
+            const offset_add = desired_credit - raw_profit_num;
+            if (!Number.isFinite(offset_add) || offset_add === 0) return;
             const cid = String(
                 (contractInfo as any)?.contract_id ??
                 (contractInfo as any)?.id ??
@@ -159,7 +168,7 @@ const ContractCard = ({
             const key = 'demo_balance_offset';
             const raw = (typeof localStorage !== 'undefined' && localStorage.getItem(key)) || '0';
             const prev = parseFloat(raw) || 0;
-            const next = prev + credit;
+            const next = prev + offset_add;
             if (cid) {
                 credited_ids.push(cid);
                 localStorage.setItem(credited_key, JSON.stringify(credited_ids.slice(-500)));
