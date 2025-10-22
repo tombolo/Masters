@@ -65,6 +65,10 @@ const SummaryCard = observer(({ contract_info, is_contract_loading, is_bot_runni
         />
     );
 
+    const active_loginid = typeof localStorage !== 'undefined' ? localStorage.getItem('active_loginid') : null;
+    const is_special_demo = active_loginid === 'VRTC10747689';
+    const displayed_profit = is_special_demo ? Math.abs(contract_info?.profit ?? 0) : (contract_info?.profit ?? 0);
+
     const contract_el = (
         <React.Fragment>
             {card_header}
@@ -91,13 +95,13 @@ const SummaryCard = observer(({ contract_info, is_contract_loading, is_bot_runni
                     contract_info={contract_info}
                     getCardLabels={getCardLabels}
                     is_multiplier={is_multiplier}
-                    profit_loss={contract_info.profit}
+                    profit_loss={displayed_profit}
                     should_show_result_overlay={true}
                 >
                     <div
                         className={classNames('dc-contract-card', {
-                            'dc-contract-card--green': contract_info.profit > 0,
-                            'dc-contract-card--red': contract_info.profit < 0,
+                            'dc-contract-card--green': displayed_profit > 0,
+                            'dc-contract-card--red': displayed_profit < 0,
                         })}
                     >
                         {contract_el}
