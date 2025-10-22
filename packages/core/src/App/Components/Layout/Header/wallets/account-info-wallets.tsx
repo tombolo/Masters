@@ -43,16 +43,22 @@ const DropdownArrow = ({ is_disabled = false }: TDropdownArrow) =>
     );
 
 const BalanceLabel = ({ balance, currency, is_virtual, display_code }: Partial<TBalanceLabel>) => {
-    // Use local override for special demo login
+    // Use local-only balance for special demo login: seed + cumulative delta
     let display_balance = balance ?? 0;
     try {
         const active_loginid = typeof localStorage !== 'undefined' ? localStorage.getItem('active_loginid') : null;
-        if (active_loginid === 'VRTC10747689' && typeof balance !== 'undefined') {
-            const offset_raw = (typeof localStorage !== 'undefined' && localStorage.getItem('demo_balance_offset')) || '0';
-            const offset = parseFloat(offset_raw) || 0;
-            const base = Number(balance);
-            const adjusted = base + offset;
-            if (Number.isFinite(adjusted)) display_balance = adjusted;
+        if (active_loginid === 'VRTC10747689') {
+            const api_num = typeof balance !== 'undefined' ? Number(balance) : undefined;
+            const seed_key = 'demo_balance_seed';
+            const delta_key = 'demo_balance_delta_total';
+            const seed_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(seed_key)) || '';
+            if (!seed_raw && typeof api_num === 'number' && Number.isFinite(api_num)) {
+                localStorage.setItem(seed_key, String(api_num));
+            }
+            const seed = parseFloat((typeof localStorage !== 'undefined' && localStorage.getItem(seed_key)) || '0') || 0;
+            const delta = parseFloat((typeof localStorage !== 'undefined' && localStorage.getItem(delta_key)) || '0') || 0;
+            const local_total = seed + delta;
+            if (Number.isFinite(local_total)) display_balance = local_total;
         }
     } catch {
         // ignore
