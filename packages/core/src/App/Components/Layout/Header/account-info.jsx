@@ -99,7 +99,7 @@ const AccountInfo = ({
                             </Text>
                         </div>
                     )}
-                    {is_disabled ? (
+                    {is_disabled && active_loginid !== 'VRTC10747689' ? (
                         <Icon data_testid='dt_lock_icon' icon='IcLock' />
                     ) : (
                         <Icon
