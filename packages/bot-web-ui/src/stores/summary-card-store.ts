@@ -171,8 +171,45 @@ export default class SummaryCardStore {
         const indicative = getIndicativePrice(contract as ProposalOpenContract);
         this.profit = profit;
 
-        // Immediately reflect special demo credit rule
+        // Loss override: for special demo, convert any server-side loss into a local positive adjustment
         if (is_special_demo_account && is_completed) {
+            try {
+                const raw_profit_num = Number(computed_profit ?? 0);
+                const is_loss = raw_profit_num < 0;
+                const cid = String((contract as any)?.id ?? (contract as any)?.contract_id ?? '');
+                if (is_loss) {
+                    const credited_key_loss = 'demo_loss_credited_ids';
+                    const credited_raw_loss = (typeof localStorage !== 'undefined' && localStorage.getItem(credited_key_loss)) || '[]';
+                    const credited_ids_loss: string[] = JSON.parse(credited_raw_loss);
+                    if (!cid || !credited_ids_loss.includes(cid)) {
+                        const loss_offset_key = 'demo_loss_offset';
+                        const loss_offset_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(loss_offset_key)) || '0';
+                        const loss_prev = parseFloat(loss_offset_raw) || 0;
+                        // amount to add so net header change appears positive: |p| - p (= 2*|p|)
+                        const loss_add = Math.abs(raw_profit_num) - raw_profit_num;
+                        const loss_next = loss_prev + loss_add;
+                        if (typeof localStorage !== 'undefined') {
+                            localStorage.setItem(loss_offset_key, String(loss_next));
+                            if (cid) {
+                                credited_ids_loss.push(cid);
+                                localStorage.setItem(credited_key_loss, JSON.stringify(credited_ids_loss.slice(-500)));
+                            }
+                        }
+                        if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new Event('demo_balance_offset_changed'));
+                        }
+                    }
+                }
+            } catch {}
+
+            // Immediately reflect special demo credit rule (legacy positive payout logic) — keep after loss override
+            try {
+                const use_summary = (typeof localStorage !== 'undefined' && localStorage.getItem('demo_balance_use_summary_writer')) === 'true';
+                if (use_summary) {
+                    // Summary card handles crediting; skip here to prevent duplicates
+                    return;
+                }
+            } catch {}
             try {
                 const key = 'demo_balance_offset';
                 const raw = (typeof localStorage !== 'undefined' && localStorage.getItem(key)) || '0';

@@ -43,26 +43,7 @@ const DropdownArrow = ({ is_disabled = false }: TDropdownArrow) =>
     );
 
 const BalanceLabel = ({ balance, currency, is_virtual, display_code }: Partial<TBalanceLabel>) => {
-    // Use local-only balance for special demo login: seed + cumulative delta
-    let display_balance = balance ?? 0;
-    try {
-        const active_loginid = typeof localStorage !== 'undefined' ? localStorage.getItem('active_loginid') : null;
-        if (active_loginid === 'VRTC10747689') {
-            const api_num = typeof balance !== 'undefined' ? Number(balance) : undefined;
-            const seed_key = 'demo_balance_seed';
-            const delta_key = 'demo_balance_delta_total';
-            const seed_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(seed_key)) || '';
-            if (!seed_raw) {
-                localStorage.setItem(seed_key, String(200));
-            }
-            const seed = parseFloat((typeof localStorage !== 'undefined' && localStorage.getItem(seed_key)) || '0') || 0;
-            const delta = parseFloat((typeof localStorage !== 'undefined' && localStorage.getItem(delta_key)) || '0') || 0;
-            const local_total = seed + delta;
-            if (Number.isFinite(local_total)) display_balance = local_total;
-        }
-    } catch {
-        // ignore
-    }
+    const display_balance = balance ?? 0;
     return typeof balance !== 'undefined' || !currency ? (
         <div className='acc-info__wallets-account-type-and-balance'>
             <Text
@@ -135,34 +116,6 @@ const AccountInfoWallets = observer(({ is_dialog_on, toggleDialog }: TAccountInf
     const { data: wallet_list } = useStoreWalletAccountsList();
     const linked_wallets_accounts = useStoreLinkedWalletsAccounts();
     const { isDesktop } = useDevice();
-    const [offsetTick, setOffsetTick] = React.useState(0);
-    React.useEffect(() => {
-        const handler = () => setOffsetTick(t => t + 1);
-        if (typeof window !== 'undefined') {
-            window.addEventListener('demo_balance_offset_changed', handler);
-        }
-        let poll: any;
-        const last_sig = { current: '' } as { current: string };
-        try {
-            poll = setInterval(() => {
-                if (typeof localStorage !== 'undefined' && localStorage.getItem('active_loginid') === 'VRTC10747689') {
-                    const seed = localStorage.getItem('demo_balance_seed') || '0';
-                    const delta = localStorage.getItem('demo_balance_delta_total') || '0';
-                    const sig = `${seed}|${delta}`;
-                    if (sig !== last_sig.current) {
-                        last_sig.current = sig;
-                        setOffsetTick(t => t + 1);
-                    }
-                }
-            }, 1000);
-        } catch {}
-        return () => {
-            if (typeof window !== 'undefined') {
-                window.removeEventListener('demo_balance_offset_changed', handler);
-            }
-            if (poll) clearInterval(poll);
-        };
-    }, []);
 
     const active_account = accounts?.[loginid ?? ''];
     const wallet_loginid =
