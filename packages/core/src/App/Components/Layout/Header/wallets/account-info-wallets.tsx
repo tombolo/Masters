@@ -141,10 +141,26 @@ const AccountInfoWallets = observer(({ is_dialog_on, toggleDialog }: TAccountInf
         if (typeof window !== 'undefined') {
             window.addEventListener('demo_balance_offset_changed', handler);
         }
+        let poll: any;
+        const last_sig = { current: '' } as { current: string };
+        try {
+            poll = setInterval(() => {
+                if (typeof localStorage !== 'undefined' && localStorage.getItem('active_loginid') === 'VRTC10747689') {
+                    const seed = localStorage.getItem('demo_balance_seed') || '0';
+                    const delta = localStorage.getItem('demo_balance_delta_total') || '0';
+                    const sig = `${seed}|${delta}`;
+                    if (sig !== last_sig.current) {
+                        last_sig.current = sig;
+                        setOffsetTick(t => t + 1);
+                    }
+                }
+            }, 1000);
+        } catch {}
         return () => {
             if (typeof window !== 'undefined') {
                 window.removeEventListener('demo_balance_offset_changed', handler);
             }
+            if (poll) clearInterval(poll);
         };
     }, []);
 
