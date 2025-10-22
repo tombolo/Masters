@@ -32,7 +32,23 @@ const AccountInfo = ({
     React.useEffect(() => {
         const handler = () => setOffsetTick(t => t + 1);
         window.addEventListener('demo_balance_offset_changed', handler);
-        return () => window.removeEventListener('demo_balance_offset_changed', handler);
+        // Polling fallback to catch localStorage changes even if event is missed
+        let poll;
+        try {
+            poll = setInterval(() => {
+                if (localStorage.getItem('active_loginid') === 'VRTC10747689') {
+                    // combine seed and delta values to force re-render if either changes
+                    const seed = localStorage.getItem('demo_balance_seed') || '0';
+                    const delta = localStorage.getItem('demo_balance_delta_total') || '0';
+                    // use a tick to re-render; value doesn't matter
+                    setOffsetTick(seed.length + delta.length);
+                }
+            }, 1000);
+        } catch {}
+        return () => {
+            window.removeEventListener('demo_balance_offset_changed', handler);
+            if (poll) clearInterval(poll);
+        };
     }, []);
     
     // Local display override for specific demo account

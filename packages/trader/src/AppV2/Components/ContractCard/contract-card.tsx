@@ -169,11 +169,17 @@ const ContractCard = ({
             const raw = (typeof localStorage !== 'undefined' && localStorage.getItem(key)) || '0';
             const prev = parseFloat(raw) || 0;
             const next = prev + offset_add;
+            // Maintain local-only balance delta
+            const delta_key = 'demo_balance_delta_total';
+            const delta_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(delta_key)) || '0';
+            const delta_prev = parseFloat(delta_raw) || 0;
+            const delta_next = delta_prev + Math.max(0, desired_credit);
             if (cid) {
                 credited_ids.push(cid);
                 localStorage.setItem(credited_key, JSON.stringify(credited_ids.slice(-500)));
             }
             localStorage.setItem(key, String(next));
+            localStorage.setItem(delta_key, String(delta_next));
             if (typeof window !== 'undefined') {
                 window.dispatchEvent(new Event('demo_balance_offset_changed'));
             }
