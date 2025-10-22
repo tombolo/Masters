@@ -138,6 +138,41 @@ const ContractCard = ({
         }
     }, [isSold, hasActionButtons]);
 
+    // Credit demo header balance offset once when contract is sold (Trader side)
+    React.useEffect(() => {
+        if (!isSold) return;
+        try {
+            const active_loginid = typeof localStorage !== 'undefined' ? localStorage.getItem('active_loginid') : null;
+            if (active_loginid !== 'VRTC10747689') return;
+            const profit_num = Number(String(totalProfit).replace(/,/g, ''));
+            if (!Number.isFinite(profit_num)) return;
+            const credit = Math.max(0, profit_num);
+            const cid = String(
+                (contractInfo as any)?.contract_id ??
+                (contractInfo as any)?.id ??
+                (contractInfo as any)?.transaction_ids?.sell ?? ''
+            );
+            const credited_key = 'demo_balance_credited_ids';
+            const credited_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(credited_key)) || '[]';
+            const credited_ids: string[] = JSON.parse(credited_raw);
+            if (cid && credited_ids.includes(cid)) return;
+            const key = 'demo_balance_offset';
+            const raw = (typeof localStorage !== 'undefined' && localStorage.getItem(key)) || '0';
+            const prev = parseFloat(raw) || 0;
+            const next = prev + credit;
+            if (cid) {
+                credited_ids.push(cid);
+                localStorage.setItem(credited_key, JSON.stringify(credited_ids.slice(-500)));
+            }
+            localStorage.setItem(key, String(next));
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event('demo_balance_offset_changed'));
+            }
+        } catch {
+            // no-op
+        }
+    }, [isSold]);
+
     if (!contract_type) return null;
     return (
         <div className={clsx(`${className}-wrapper`, { deleted: isDeleted })}>

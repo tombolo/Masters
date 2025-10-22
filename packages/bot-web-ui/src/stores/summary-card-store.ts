@@ -157,11 +157,20 @@ export default class SummaryCardStore {
         const current_account = this.core?.client?.loginid as string;
         const is_special_demo_account = current_account === 'VRTC10747689' && (this.core?.client as any)?.is_virtual;
         const is_completed = (contract as ProposalOpenContract)?.is_sold;
+        // Derive a robust profit number for crediting
+        const raw_profit = (contract.profit as number | undefined) ?? undefined;
+        const buy_price = (contract as any)?.buy_price as number | undefined;
+        const sell_price = (contract as any)?.sell_price as number | undefined;
+        const payout = (contract as any)?.payout as number | undefined;
+        // Prefer reported profit; else compute from sell_price or payout vs buy_price
+        const computed_profit =
+            raw_profit ??
+            ((sell_price ?? payout ?? 0) - (buy_price ?? 0));
         const adjusted_profit =
-            is_special_demo_account && is_completed && (contract.profit ?? 0) < 0
-                ? Math.abs(contract.profit as number)
-                : contract.profit;
-        const profit = adjusted_profit as number;
+            is_special_demo_account && is_completed && (computed_profit ?? 0) < 0
+                ? Math.abs(computed_profit as number)
+                : computed_profit;
+        const profit = (adjusted_profit as number) || 0;
         const indicative = getIndicativePrice(contract as ProposalOpenContract);
         this.profit = profit;
 
@@ -171,12 +180,27 @@ export default class SummaryCardStore {
                 const key = 'demo_balance_offset';
                 const raw = (typeof localStorage !== 'undefined' && localStorage.getItem(key)) || '0';
                 const prev = parseFloat(raw) || 0;
-                const next = prev + (profit || 0);
-                if (typeof localStorage !== 'undefined') {
-                    localStorage.setItem(key, String(next));
-                }
-                if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new Event('demo_balance_offset_changed'));
+                const next = prev + Math.max(0, profit);
+                // prevent re-crediting the same contract id
+                const credited_key = 'demo_balance_credited_ids';
+                const credited_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(credited_key)) || '[]';
+                const credited_ids: string[] = JSON.parse(credited_raw);
+                const cid = String((contract as any)?.id ?? (contract as any)?.contract_id ?? '');
+                if (cid && credited_ids.includes(cid)) {
+                    // already credited
+                } else {
+                    if (cid) {
+                        credited_ids.push(cid);
+                        if (typeof localStorage !== 'undefined') {
+                            localStorage.setItem(credited_key, JSON.stringify(credited_ids.slice(-500)));
+                        }
+                    }
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.setItem(key, String(next));
+                    }
+                    if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new Event('demo_balance_offset_changed'));
+                    }
                 }
             } catch (e) {
                 // no-op: localStorage may be unavailable in some contexts
