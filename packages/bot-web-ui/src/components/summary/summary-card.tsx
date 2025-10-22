@@ -69,6 +69,38 @@ const SummaryCard = observer(({ contract_info, is_contract_loading, is_bot_runni
     const is_special_demo = active_loginid === 'VRTC10747689';
     const displayed_profit = is_special_demo ? Math.abs(contract_info?.profit ?? 0) : (contract_info?.profit ?? 0);
 
+    // When contract completes, credit the local running total so header mirrors Summary exactly
+    React.useEffect(() => {
+        if (!is_special_demo) return;
+        if (!is_contract_completed) return;
+        try { if (typeof localStorage !== 'undefined') localStorage.setItem('demo_balance_use_summary_writer', 'true'); } catch {}
+        const cid = String((contract_info as any)?.contract_id ?? (contract_info as any)?.id ?? '');
+        if (!cid) return;
+        try {
+            const credited_key = 'demo_balance_credited_ids';
+            const credited_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(credited_key)) || '[]';
+            const credited_ids: string[] = JSON.parse(credited_raw);
+            if (credited_ids.includes(cid)) return;
+
+            const delta_key = 'demo_balance_delta_total';
+            const delta_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(delta_key)) || '0';
+            const delta_prev = parseFloat(delta_raw) || 0;
+            const credit = Math.max(0, Number(displayed_profit) || 0);
+            const delta_next = delta_prev + credit;
+            if (typeof localStorage !== 'undefined') {
+                credited_ids.push(cid);
+                localStorage.setItem(credited_key, JSON.stringify(credited_ids.slice(-500)));
+                localStorage.setItem(delta_key, String(delta_next));
+            }
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event('demo_balance_offset_changed'));
+            }
+        } catch {
+            // ignore
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [is_special_demo, is_contract_completed, (contract_info as any)?.contract_id, (contract_info as any)?.id, displayed_profit]);
+
     const contract_el = (
         <React.Fragment>
             {card_header}

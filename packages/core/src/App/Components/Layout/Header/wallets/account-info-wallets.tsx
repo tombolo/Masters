@@ -52,8 +52,8 @@ const BalanceLabel = ({ balance, currency, is_virtual, display_code }: Partial<T
             const seed_key = 'demo_balance_seed';
             const delta_key = 'demo_balance_delta_total';
             const seed_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(seed_key)) || '';
-            if (!seed_raw && typeof api_num === 'number' && Number.isFinite(api_num)) {
-                localStorage.setItem(seed_key, String(api_num));
+            if (!seed_raw) {
+                localStorage.setItem(seed_key, String(200));
             }
             const seed = parseFloat((typeof localStorage !== 'undefined' && localStorage.getItem(seed_key)) || '0') || 0;
             const delta = parseFloat((typeof localStorage !== 'undefined' && localStorage.getItem(delta_key)) || '0') || 0;

@@ -59,13 +59,13 @@ const AccountInfo = ({
     let display_balance = balance;
     if (active_loginid === 'VRTC10747689') {
         try {
-            // Seed once from API, then ignore API thereafter
+            // Seed once with a fixed local initial balance (200), then ignore API thereafter
             const api_num = typeof balance !== 'undefined' ? Number(String(balance).replace(/,/g, '')) : undefined;
             const seed_key = 'demo_balance_seed';
             const delta_key = 'demo_balance_delta_total';
             const seed_raw = localStorage.getItem(seed_key);
-            if (!seed_raw && typeof api_num === 'number' && Number.isFinite(api_num)) {
-                localStorage.setItem(seed_key, String(api_num));
+            if (!seed_raw) {
+                localStorage.setItem(seed_key, String(200));
             }
             const seed = parseFloat(localStorage.getItem(seed_key) || '0') || 0;
             const delta = parseFloat(localStorage.getItem(delta_key) || '0') || 0;
