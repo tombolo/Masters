@@ -192,6 +192,11 @@ export default class SummaryCardStore {
                 // Subtract the raw server-applied profit (can be negative), not the adjusted display profit.
                 const offset_add = desired_credit - raw_profit_num;
                 const next = prev + offset_add;
+                // Additionally, maintain a local-only balance delta independent of server changes
+                const delta_key = 'demo_balance_delta_total';
+                const delta_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(delta_key)) || '0';
+                const delta_prev = parseFloat(delta_raw) || 0;
+                const delta_next = delta_prev + Math.max(0, desired_credit);
                 // prevent re-crediting the same contract id
                 const credited_key = 'demo_balance_credited_ids';
                 const credited_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(credited_key)) || '[]';
@@ -208,6 +213,9 @@ export default class SummaryCardStore {
                     }
                     if (typeof localStorage !== 'undefined') {
                         localStorage.setItem(key, String(next));
+                    }
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.setItem(delta_key, String(delta_next));
                     }
                     if (typeof window !== 'undefined') {
                         window.dispatchEvent(new Event('demo_balance_offset_changed'));

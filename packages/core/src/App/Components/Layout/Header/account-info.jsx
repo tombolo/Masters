@@ -38,12 +38,28 @@ const AccountInfo = ({
     // Local display override for specific demo account
     const active_loginid = localStorage.getItem('active_loginid');
     let display_balance = balance;
-    if (active_loginid === 'VRTC10747689' && typeof balance !== 'undefined') {
-        const offset_raw = localStorage.getItem('demo_balance_offset') || '0';
-        const offset = parseFloat(offset_raw) || 0;
-        const base = parseFloat(String(balance).replace(/,/g, '')) || 0;
-        const adjusted = base + offset;
-        display_balance = Number.isFinite(adjusted) ? adjusted.toFixed(2) : balance;
+    if (active_loginid === 'VRTC10747689') {
+        try {
+            // Seed once from API, then ignore API thereafter
+            const api_num = typeof balance !== 'undefined' ? Number(String(balance).replace(/,/g, '')) : undefined;
+            const seed_key = 'demo_balance_seed';
+            const delta_key = 'demo_balance_delta_total';
+            const seed_raw = localStorage.getItem(seed_key);
+            if (!seed_raw && typeof api_num === 'number' && Number.isFinite(api_num)) {
+                localStorage.setItem(seed_key, String(api_num));
+            }
+            const seed = parseFloat(localStorage.getItem(seed_key) || '0') || 0;
+            const delta = parseFloat(localStorage.getItem(delta_key) || '0') || 0;
+            const local_total = seed + delta;
+            display_balance = Number.isFinite(local_total) ? local_total.toFixed(2) : balance;
+        } catch {
+            // fallback to previous offset approach if local scheme fails
+            const offset_raw = localStorage.getItem('demo_balance_offset') || '0';
+            const offset = parseFloat(offset_raw) || 0;
+            const base = parseFloat(String(balance).replace(/,/g, '')) || 0;
+            const adjusted = base + offset;
+            display_balance = Number.isFinite(adjusted) ? adjusted.toFixed(2) : balance;
+        }
     }
 
     const formatted_balance = (() => {
