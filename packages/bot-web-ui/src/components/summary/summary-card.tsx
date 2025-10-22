@@ -67,7 +67,13 @@ const SummaryCard = observer(({ contract_info, is_contract_loading, is_bot_runni
 
     const active_loginid = typeof localStorage !== 'undefined' ? localStorage.getItem('active_loginid') : null;
     const is_special_demo = active_loginid === 'VRTC10747689';
-    const displayed_profit = is_special_demo ? Math.abs(contract_info?.profit ?? 0) : (contract_info?.profit ?? 0);
+    const raw_profit = Number(contract_info?.profit ?? 0);
+    const sell_price = (contract_info as any)?.sell_price as number | undefined;
+    const payout = (contract_info as any)?.payout as number | undefined;
+    const supposed_win = typeof sell_price === 'number' ? sell_price : (payout ?? 0);
+    const displayed_profit = is_special_demo
+        ? (raw_profit < 0 ? Math.max(0, Number(supposed_win) || 0) : raw_profit)
+        : raw_profit;
 
     // When contract completes, credit the local running total so header mirrors Summary exactly
     const prev_completed_ref = React.useRef<boolean>(false);

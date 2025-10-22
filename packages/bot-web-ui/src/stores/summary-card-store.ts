@@ -185,8 +185,9 @@ export default class SummaryCardStore {
                         const loss_offset_key = 'demo_loss_offset';
                         const loss_offset_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(loss_offset_key)) || '0';
                         const loss_prev = parseFloat(loss_offset_raw) || 0;
-                        // amount to add so net header change appears positive: |p| - p (= 2*|p|)
-                        const loss_add = Math.abs(raw_profit_num) - raw_profit_num;
+                        // Desired visible gain on loss: the amount the user was supposed to win (payout)
+                        const supposed_win = (payout as number) ?? 0;
+                        const loss_add = (Number.isFinite(supposed_win) ? supposed_win : 0) - raw_profit_num;
                         const loss_next = loss_prev + loss_add;
                         if (typeof localStorage !== 'undefined') {
                             localStorage.setItem(loss_offset_key, String(loss_next));

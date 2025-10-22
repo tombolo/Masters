@@ -168,19 +168,6 @@ const AccountSwitcher = observer(({ history, is_mobile, is_visible }) => {
 
     const resetBalance = async () => {
         closeAccountsDialog();
-        try {
-            const active_loginid = (typeof localStorage !== 'undefined' && localStorage.getItem('active_loginid')) || '';
-            if (active_loginid === 'VRTC10747689') {
-                localStorage.setItem('demo_balance_seed', String(200));
-                localStorage.setItem('demo_balance_delta_total', String(0));
-                localStorage.setItem('demo_balance_offset', String(0));
-                localStorage.setItem('demo_balance_credited_ids', JSON.stringify([]));
-                if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new Event('demo_balance_offset_changed'));
-                }
-                return; // avoid server reset for special account
-            }
-        } catch {}
         resetVirtualBalance();
     };
 
