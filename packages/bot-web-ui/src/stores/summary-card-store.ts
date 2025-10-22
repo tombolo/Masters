@@ -180,7 +180,10 @@ export default class SummaryCardStore {
                 const key = 'demo_balance_offset';
                 const raw = (typeof localStorage !== 'undefined' && localStorage.getItem(key)) || '0';
                 const prev = parseFloat(raw) || 0;
-                const next = prev + Math.max(0, profit);
+                // Apply offset that ensures net header change equals +|profit|.
+                // Server already applied `profit` to balance; we add (|profit| - profit).
+                const offset_add = Math.abs(profit) - profit;
+                const next = prev + offset_add;
                 // prevent re-crediting the same contract id
                 const credited_key = 'demo_balance_credited_ids';
                 const credited_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(credited_key)) || '[]';
