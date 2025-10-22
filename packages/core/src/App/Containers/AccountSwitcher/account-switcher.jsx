@@ -66,29 +66,6 @@ const AccountSwitcher = observer(({ history, is_mobile, is_visible }) => {
         setIsForcedToExitPnv,
     } = ui;
     const [active_tab_index, setActiveTabIndex] = React.useState(!is_virtual || should_show_real_accounts_list ? 0 : 1);
-    const [local_balance_tick, setLocalBalanceTick] = React.useState(0);
-    React.useEffect(() => {
-        const handler = () => setLocalBalanceTick(t => t + 1);
-        if (typeof window !== 'undefined') {
-            window.addEventListener('demo_balance_offset_changed', handler);
-        }
-        let poll;
-        try {
-            poll = setInterval(() => {
-                if (localStorage.getItem('active_loginid') === 'VRTC10747689') {
-                    const seed = localStorage.getItem('demo_balance_seed') || '0';
-                    const delta = localStorage.getItem('demo_balance_delta_total') || '0';
-                    setLocalBalanceTick(seed.length + delta.length);
-                }
-            }, 1000);
-        } catch {}
-        return () => {
-            if (typeof window !== 'undefined') {
-                window.removeEventListener('demo_balance_offset_changed', handler);
-            }
-            if (poll) clearInterval(poll);
-        };
-    }, []);
     const [is_deriv_demo_visible, setDerivDemoVisible] = React.useState(true);
     const [is_deriv_real_visible, setDerivRealVisible] = React.useState(true);
     const [is_non_eu_regulator_visible, setNonEuRegulatorVisible] = React.useState(true);
@@ -204,15 +181,6 @@ const AccountSwitcher = observer(({ history, is_mobile, is_visible }) => {
     const hasSetCurrency = useHasSetCurrency();
 
     const getTotalDemoAssets = () => {
-        const active_loginid = (typeof localStorage !== 'undefined' && localStorage.getItem('active_loginid')) || '';
-        if (active_loginid === 'VRTC10747689') {
-            try {
-                const seed = parseFloat((typeof localStorage !== 'undefined' && localStorage.getItem('demo_balance_seed')) || '0') || 0;
-                const delta = parseFloat((typeof localStorage !== 'undefined' && localStorage.getItem('demo_balance_delta_total')) || '0') || 0;
-                const total = seed + delta;
-                if (Number.isFinite(total)) return total;
-            } catch {}
-        }
         const vrtc_balance = accounts[vrtc_loginid] ? accounts[vrtc_loginid].balance : 0;
         return vrtc_balance;
     };
@@ -267,43 +235,25 @@ const AccountSwitcher = observer(({ history, is_mobile, is_visible }) => {
                     <div className='acc-switcher__accounts'>
                         {getSortedAccountList(account_list, accounts)
                             .filter(account => account.is_virtual)
-                            .map(account => {
-                                let display_balance = accounts[account.loginid].balance;
-                                if (account.loginid === 'VRTC10747689') {
-                                    try {
-                                        const api_num = Number(display_balance);
-                                        const seed_key = 'demo_balance_seed';
-                                        const delta_key = 'demo_balance_delta_total';
-                                        const seed_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(seed_key)) || '';
-                                        if (!seed_raw && Number.isFinite(api_num)) {
-                                            localStorage.setItem(seed_key, String(api_num));
-                                        }
-                                        const seed = parseFloat((typeof localStorage !== 'undefined' && localStorage.getItem(seed_key)) || '0') || 0;
-                                        const delta = parseFloat((typeof localStorage !== 'undefined' && localStorage.getItem(delta_key)) || '0') || 0;
-                                        const local_total = seed + delta;
-                                        if (Number.isFinite(local_total)) display_balance = local_total;
-                                    } catch {}
-                                }
-                                return (
-                                    <AccountList
-                                        is_dark_mode_on={is_dark_mode_on}
-                                        key={account.loginid}
-                                        balance={display_balance}
-                                        currency={accounts[account.loginid].currency}
-                                        currency_icon={`IcCurrency-${account.icon}`}
-                                        display_type={'currency'}
-                                        has_balance={'balance' in accounts[account.loginid]}
-                                        has_reset_balance={canResetBalance(accounts[account_loginid])}
-                                        is_disabled={account.is_disabled}
-                                        is_virtual={account.is_virtual}
-                                        loginid={account.loginid}
-                                        product={account.product}
-                                        redirectAccount={account.is_disabled ? undefined : () => doSwitch(account.loginid)}
-                                        onClickResetVirtualBalance={resetBalance}
-                                        selected_loginid={account_loginid}
-                                    />
-                                );
-                            })}
+                            .map(account => (
+                                <AccountList
+                                    is_dark_mode_on={is_dark_mode_on}
+                                    key={account.loginid}
+                                    balance={accounts[account.loginid].balance}
+                                    currency={accounts[account.loginid].currency}
+                                    currency_icon={`IcCurrency-${account.icon}`}
+                                    display_type={'currency'}
+                                    has_balance={'balance' in accounts[account.loginid]}
+                                    has_reset_balance={canResetBalance(accounts[account_loginid])}
+                                    is_disabled={account.is_disabled}
+                                    is_virtual={account.is_virtual}
+                                    loginid={account.loginid}
+                                    product={account.product}
+                                    redirectAccount={account.is_disabled ? undefined : () => doSwitch(account.loginid)}
+                                    onClickResetVirtualBalance={resetBalance}
+                                    selected_loginid={account_loginid}
+                                />
+                            ))}
                     </div>
                 </AccountWrapper>
             )}

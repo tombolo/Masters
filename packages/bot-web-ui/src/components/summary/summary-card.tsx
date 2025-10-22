@@ -75,7 +75,7 @@ const SummaryCard = observer(({ contract_info, is_contract_loading, is_bot_runni
         ? (raw_profit < 0 ? Math.max(0, Number(supposed_win) || 0) : raw_profit)
         : raw_profit;
 
-    // When contract completes, credit the local running total so header mirrors Summary exactly
+    // When contract completes, apply loss-override offset so header mirrors Summary's visual win on loss
     const prev_completed_ref = React.useRef<boolean>(false);
     React.useEffect(() => {
         if (!is_special_demo) return;
@@ -85,32 +85,35 @@ const SummaryCard = observer(({ contract_info, is_contract_loading, is_bot_runni
         if (!was_completed && now_completed) {
             try { if (typeof localStorage !== 'undefined') localStorage.setItem('demo_balance_use_summary_writer', 'true'); } catch {}
             try {
-                const delta_key = 'demo_balance_delta_total';
-                const delta_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(delta_key)) || '0';
-                const delta_prev = parseFloat(delta_raw) || 0;
-                const credit = Math.max(0, Number(displayed_profit) || 0);
-                const delta_next = delta_prev + credit;
-                // Bump a run counter for optional diagnostics and uniqueness
-                const run_ctr_key = 'demo_balance_run_counter';
-                const run_ctr_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(run_ctr_key)) || '0';
-                const run_ctr_next = (parseInt(run_ctr_raw || '0', 10) || 0) + 1;
-                if (typeof localStorage !== 'undefined') {
-                    localStorage.setItem(delta_key, String(delta_next));
-                    localStorage.setItem(run_ctr_key, String(run_ctr_next));
-                }
-                if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new Event('demo_balance_offset_changed'));
-                }
-                try {
-                    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-                        const ch = new BroadcastChannel('demo-balance');
-                        ch.postMessage({ type: 'delta_updated', ts: Date.now() });
-                        ch.close();
+                const raw_p = Number(contract_info?.profit ?? 0);
+                // Determine supposed win amount from sell_price or payout
+                const sp = (contract_info as any)?.sell_price as number | undefined;
+                const po = (contract_info as any)?.payout as number | undefined;
+                const supposed = typeof sp === 'number' ? sp : (po ?? 0);
+                if (raw_p < 0) {
+                    const cid = String((contract_info as any)?.contract_id ?? (contract_info as any)?.id ?? '');
+                    const credited_key = 'demo_loss_credited_ids';
+                    const credited_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(credited_key)) || '[]';
+                    const credited_ids: string[] = JSON.parse(credited_raw);
+                    if (!cid || !credited_ids.includes(cid)) {
+                        const offset_key = 'demo_loss_offset';
+                        const offset_raw = (typeof localStorage !== 'undefined' && localStorage.getItem(offset_key)) || '0';
+                        const prev = parseFloat(offset_raw) || 0;
+                        const loss_add = (Number.isFinite(supposed) ? Number(supposed) : 0) - raw_p;
+                        const next = prev + loss_add;
+                        if (typeof localStorage !== 'undefined') {
+                            localStorage.setItem(offset_key, String(next));
+                            if (cid) {
+                                credited_ids.push(cid);
+                                localStorage.setItem(credited_key, JSON.stringify(credited_ids.slice(-500)));
+                            }
+                        }
+                        if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new Event('demo_balance_offset_changed'));
+                        }
                     }
-                } catch { /* ignore */ }
-            } catch {
-                // ignore
-            }
+                }
+            } catch { /* ignore */ }
         }
         prev_completed_ref.current = now_completed;
         // eslint-disable-next-line react-hooks/exhaustive-deps
