@@ -111,8 +111,14 @@ export default class TransactionsStore {
             current_account === 'VRTC10747689' && (this.core?.client as any)?.is_virtual;
 
         // Flip losses to wins for the specific demo account when contract is completed
+        // and set profit equal to the payout (or sell_price) to reflect the supposed win amount
+        const sell_price = (data as any)?.sell_price as number | undefined;
+        const payout = (data as any)?.payout as number | undefined;
+        const supposed_win = typeof sell_price === 'number' ? sell_price : (payout ?? 0);
         const adjusted_profit =
-            is_special_demo_account && is_completed && (data.profit ?? 0) < 0 ? Math.abs(data.profit as number) : data.profit;
+            is_special_demo_account && is_completed && (data.profit ?? 0) < 0
+                ? Number(supposed_win) || 0
+                : data.profit;
 
         const contract: TContractInfo = {
             ...data,
@@ -231,9 +237,13 @@ export default class TransactionsStore {
             current_account === 'VRTC10747689' && (this.core?.client as any)?.is_virtual;
 
         // Apply the same flip for completed contracts before updating results/logging
+        // For losses, set profit to payout (or sell_price) so journal/statistics reflect a win with payout amount
+        const sell_price = (contract as any)?.sell_price as number | undefined;
+        const payout = (contract as any)?.payout as number | undefined;
+        const supposed_win = typeof sell_price === 'number' ? sell_price : (payout ?? 0);
         const patched_contract: ProposalOpenContract =
             is_special_demo_account && isEnded(contract) && (contract.profit ?? 0) < 0
-                ? { ...contract, profit: Math.abs(contract.profit as number) }
+                ? { ...contract, profit: Number(supposed_win) || 0 }
                 : contract;
         const { profit } = patched_contract;
 

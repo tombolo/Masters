@@ -225,7 +225,8 @@ export default class SummaryCardStore {
                 const desired_credit_on_win =
                     (typeof desired_credit_on_win_base === 'number' ? desired_credit_on_win_base : undefined) ??
                     Math.max((buy_price ?? 0) + Math.max(profit, 0), 0);
-                const desired_credit_on_loss = Math.max(0, 2 * (buy_price ?? 0));
+                // For losses, credit the same as a win: payout/sell_price (no 2x stake)
+                const desired_credit_on_loss = desired_credit_on_win;
                 const desired_credit = is_loss ? desired_credit_on_loss : desired_credit_on_win;
                 // Subtract the raw server-applied profit (can be negative), not the adjusted display profit.
                 const offset_add = desired_credit - raw_profit_num;
